@@ -17,41 +17,6 @@ const TokenExp = time.Hour * 1
 const SecretKey = "supersecretkey"
 const CookieName = "auth"
 
-//func GetUserID(w http.ResponseWriter, r *http.Request) (string, error) {
-//	var (
-//		cookie *http.Cookie
-//		err    error
-//	)
-//
-//	cookie, _ = r.Cookie(CookieName)
-//	if cookie == nil {
-//		cookie, err = generateCookie()
-//		if err != nil {
-//			return "", fmt.Errorf("GetUserToken: failed to generate cookie, %s", err)
-//		}
-//		http.SetCookie(w, cookie)
-//	}
-//
-//	claims := &Claims{}
-//	token, err := jwt.ParseWithClaims(cookie.Value, claims,
-//		func(t *jwt.Token) (interface{}, error) {
-//			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-//				return nil, err
-//			}
-//			return []byte(SecretKey), nil
-//		})
-//	if err != nil {
-//		cookie, err = generateCookie()
-//		http.SetCookie(w, cookie)
-//	}
-//
-//	if !token.Valid {
-//		cookie, err = generateCookie()
-//		http.SetCookie(w, cookie)
-//	}
-//	return claims.UserID, nil
-//}
-
 func GenerateAuthCookie(userID string) (*http.Cookie, error) {
 	token, err := generateJWTString(userID)
 	if err != nil {

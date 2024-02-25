@@ -30,8 +30,9 @@ func CreateApp(logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	userService := services.NewUserService(userRepository)
+	orderService := services.NewOrderService(userRepository)
 
-	handler := handlers.NewHandler(logger, userService)
+	handler := handlers.NewHandler(logger, userService, orderService)
 
 	r := router.NewRouter(handler)
 

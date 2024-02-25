@@ -17,3 +17,21 @@ type ErrWrongPasswordOrLogin struct{}
 func (e *ErrWrongPasswordOrLogin) Error() string {
 	return "Wrong password or login"
 }
+
+type ErrOrderAlreadyCreated struct{}
+
+func (e *ErrOrderAlreadyCreated) Error() string {
+	return "Order already created"
+}
+
+type ErrOrderAlreadyCreatedByOtherUser struct{}
+
+func (e *ErrOrderAlreadyCreatedByOtherUser) Error() string {
+	return "Order already created by other user"
+}
+
+type NotFoundUserIDInContext struct{}
+
+func (e *NotFoundUserIDInContext) Error() string {
+	return "Unauthorized"
+}

@@ -15,7 +15,7 @@ type UserService struct {
 }
 
 type userRepository interface {
-	Create(models.User) error
+	CreateUser(models.User) error
 	GetUserByLogin(string) (*models.User, error)
 }
 
@@ -44,7 +44,7 @@ func (u UserService) Register(userCreate models.UserRegisterOrLoginRequest) (*ht
 		Password: hashPass,
 	}
 
-	err = u.userRepository.Create(user)
+	err = u.userRepository.CreateUser(user)
 
 	if err != nil {
 		return nil, err
@@ -69,6 +69,8 @@ func (u UserService) Login(userCreate models.UserRegisterOrLoginRequest) (*http.
 	return nil, &lib.ErrWrongPasswordOrLogin{}
 }
 
-func NewUserService(repository userRepository) *UserService {
-	return &UserService{userRepository: repository}
+func NewUserService(userRepository userRepository) *UserService {
+	return &UserService{
+		userRepository: userRepository,
+	}
 }
