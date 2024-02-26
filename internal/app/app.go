@@ -2,6 +2,8 @@ package app
 
 import (
 	"fmt"
+	"github.com/Fserlut/gophermart/internal/services/order"
+	"github.com/Fserlut/gophermart/internal/services/user"
 	"log/slog"
 	"net/http"
 
@@ -11,7 +13,6 @@ import (
 	"github.com/Fserlut/gophermart/internal/db"
 	"github.com/Fserlut/gophermart/internal/handlers"
 	"github.com/Fserlut/gophermart/internal/router"
-	"github.com/Fserlut/gophermart/internal/services"
 )
 
 type App struct {
@@ -29,8 +30,8 @@ func CreateApp(logger *slog.Logger, cfg *config.Config) *App {
 		panic(err.Error())
 	}
 
-	userService := services.NewUserService(userRepository)
-	orderService := services.NewOrderService(userRepository)
+	userService := user.NewUserService(userRepository)
+	orderService := order.NewOrderService(userRepository)
 
 	handler := handlers.NewHandler(logger, userService, orderService)
 

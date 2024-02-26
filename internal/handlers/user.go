@@ -5,7 +5,8 @@ import (
 	"errors"
 	"github.com/Fserlut/gophermart/internal/lib"
 	"github.com/Fserlut/gophermart/internal/models"
-	"github.com/Fserlut/gophermart/internal/services"
+	"github.com/Fserlut/gophermart/internal/services/order"
+	"github.com/Fserlut/gophermart/internal/services/user"
 	"io"
 	"log/slog"
 	"net/http"
@@ -15,8 +16,8 @@ type Handler struct {
 	logger *slog.Logger
 
 	// TODO тут не лучше использовать интерфейс?
-	userService  *services.UserService
-	orderService *services.OrderService
+	userService  *user.ServiceUser
+	orderService *order.ServiceOrder
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -127,7 +128,45 @@ func (h *Handler) GetOrders(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(orders)
 }
 
-func NewHandler(log *slog.Logger, userService *services.UserService, orderService *services.OrderService) *Handler {
+func (h *Handler) GetUserBalance(w http.ResponseWriter, r *http.Request) {
+	balance, err := h.orderService.GetUserBalance(r.Context())
+
+	if err != nil {
+		h.logger.Error("Error from order service", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(balance)
+}
+
+func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
+	var req models.WithdrawRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.logger.Error("Error on decode request", err.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !lib.CheckLuhn(req.Order) {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		return
+	}
+
+	code, err := h.orderService.Withdraw(r.Context(), req)
+
+	if err != nil {
+		h.logger.Error("Error from order service", err.Error())
+		w.WriteHeader(code)
+		return
+	}
+
+	w.WriteHeader(code)
+}
+
+func NewHandler(log *slog.Logger, userService *user.ServiceUser, orderService *order.ServiceOrder) *Handler {
 	return &Handler{
 		logger:       log,
 		userService:  userService,

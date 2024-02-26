@@ -24,6 +24,8 @@ func NewRouter(handler *handlers.Handler) *chi.Mux {
 
 			r.With(authMiddleware.AuthMiddleware).Post("/orders", handler.CreateOrder)
 			r.With(authMiddleware.AuthMiddleware).Get("/orders", handler.GetOrders)
+			r.With(authMiddleware.AuthMiddleware).Get("/balance", handler.GetUserBalance)
+			r.With(authMiddleware.AuthMiddleware).Post("/balance/withdraw", handler.Withdraw)
 		})
 	})
 

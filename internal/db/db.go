@@ -70,10 +70,10 @@ func (d *Database) GetOrderByNumber(orderNumber string) (*models.Order, error) {
 	return nil, nil
 }
 
-func (d *Database) CreateOrder(orderNumber string, userUUID string) error {
+func (d *Database) CreateOrder(orderNumber string, userUUID string, withdraw *float64) error {
 	res, err := d.db.ExecContext(
 		context.Background(),
-		`INSERT INTO orders (number, user_uuid) VALUES ($1, $2) ON CONFLICT (number) DO NOTHING`, orderNumber, userUUID,
+		`INSERT INTO orders (number, user_uuid, withdraw) VALUES ($1, $2, $3) ON CONFLICT (number) DO NOTHING`, orderNumber, userUUID, withdraw,
 	)
 
 	if err != nil {
@@ -120,23 +120,42 @@ func (d *Database) GetOrdersByUserID(userID string) ([]models.Order, error) {
 
 	for rows.Next() {
 		var order models.Order
-		var accrual sql.NullInt64
+		var accrual sql.NullFloat64
 		if err := rows.Scan(&order.Number, &order.Status, &order.UploadedAt, &accrual); err != nil {
 			log.Printf("Error scanning order for userID %s: %v", userID, err)
 			return nil, err
 		}
 		if accrual.Valid {
-			order.Accrual = &accrual.Int64
+			order.Accrual = &accrual.Float64
 		}
 		orders = append(orders, order)
 	}
 
 	if err := rows.Err(); err != nil {
-		log.Printf("Error iterating orders for user_ID %s: %v", userID, err)
+		log.Printf("Error iterating orders for userID %s: %v", userID, err)
 		return nil, fmt.Errorf("error iterating orders for userID %s: %w", userID, err)
 	}
 
 	return orders, nil
+}
+
+func (d *Database) GetUserBalance(userID string) (*models.UserBalanceResponse, error) {
+	var response models.UserBalanceResponse
+
+	query := `
+	SELECT
+		COALESCE(SUM(accrual)::NUMERIC(10,2), 0) AS current,
+		COALESCE(SUM(withdraw)::NUMERIC(10,2), 0) AS withdrawn
+	FROM orders
+	WHERE user_uuid = $1
+	`
+
+	err := d.db.QueryRow(query, userID).Scan(&response.Current, &response.Withdrawn)
+	if err != nil {
+		return nil, fmt.Errorf("error querying user balance: %w", err)
+	}
+
+	return &response, nil
 }
 
 func NewDB(dsn string) (*Database, error) {
@@ -159,7 +178,8 @@ func NewDB(dsn string) (*Database, error) {
 				number TEXT PRIMARY KEY,
 				user_uuid TEXT,
 				status TEXT DEFAULT 'NEW',
-				accrual INTEGER,
+				accrual NUMERIC(10, 2),
+				withdraw NUMERIC(10, 2),
 				uploaded_at TIMESTAMP WITHOUT TIME ZONE DEFAULT CURRENT_TIMESTAMP,
 				FOREIGN KEY (user_uuid) REFERENCES users(uuid)
 		);

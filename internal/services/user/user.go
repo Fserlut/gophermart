@@ -1,4 +1,4 @@
-package services
+package user
 
 import (
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"github.com/Fserlut/gophermart/internal/models"
 )
 
-type UserService struct {
+type ServiceUser struct {
 	userRepository userRepository
 }
 
@@ -32,7 +32,7 @@ func verifyPassword(hashedPassword, password string) bool {
 	return err == nil
 }
 
-func (u UserService) Register(userCreate models.UserRegisterOrLoginRequest) (*http.Cookie, error) {
+func (u ServiceUser) Register(userCreate models.UserRegisterOrLoginRequest) (*http.Cookie, error) {
 	hashPass, err := hashPassword(userCreate.Password)
 	if err != nil {
 		return nil, err
@@ -55,7 +55,7 @@ func (u UserService) Register(userCreate models.UserRegisterOrLoginRequest) (*ht
 	return authCookie, nil
 }
 
-func (u UserService) Login(userCreate models.UserRegisterOrLoginRequest) (*http.Cookie, error) {
+func (u ServiceUser) Login(userCreate models.UserRegisterOrLoginRequest) (*http.Cookie, error) {
 	user, err := u.userRepository.GetUserByLogin(userCreate.Login)
 	if err != nil {
 		return nil, err
@@ -69,8 +69,8 @@ func (u UserService) Login(userCreate models.UserRegisterOrLoginRequest) (*http.
 	return nil, &lib.ErrWrongPasswordOrLogin{}
 }
 
-func NewUserService(userRepository userRepository) *UserService {
-	return &UserService{
+func NewUserService(userRepository userRepository) *ServiceUser {
+	return &ServiceUser{
 		userRepository: userRepository,
 	}
 }
