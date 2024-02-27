@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"fmt"
 	"os"
 )
 
@@ -16,7 +17,7 @@ func LoadConfig() *Config {
 
 	flag.StringVar(&cfg.RunAddress, "a", ":3333", "Server address:port")
 	flag.StringVar(&cfg.DatabaseURI, "d", "", "Database URI")
-	flag.StringVar(&cfg.AccrualSystemAddress, "r", ":8080", "Accrual system address")
+	flag.StringVar(&cfg.AccrualSystemAddress, "r", "http://localhost:8080", "Accrual system address")
 
 	flag.Parse()
 
@@ -31,6 +32,8 @@ func LoadConfig() *Config {
 	if envAccrualSystemAddress := os.Getenv("ACCRUAL_SYSTEM_ADDRESS"); envAccrualSystemAddress != "" {
 		cfg.AccrualSystemAddress = envAccrualSystemAddress
 	}
+
+	fmt.Println(cfg)
 
 	return cfg
 }

@@ -3,6 +3,8 @@ package order
 import (
 	"context"
 	"errors"
+	"fmt"
+	"github.com/Fserlut/gophermart/internal/config"
 	"net/http"
 
 	"github.com/Fserlut/gophermart/internal/lib"
@@ -11,6 +13,7 @@ import (
 
 type ServiceOrder struct {
 	orderRepository orderRepository
+	cfg             *config.Config
 }
 
 type orderRepository interface {
@@ -18,14 +21,14 @@ type orderRepository interface {
 	CreateOrder(orderNumber string, userUUID string, withdraw *float64) error
 	GetOrdersByUserID(string) ([]models.Order, error)
 	GetUserBalance(string) (*models.UserBalanceResponse, error)
+	Withdrawals(string) ([]models.WithdrawalsResponse, error)
+	Update(orderNumber string, status string, accrual *float64) error
 }
 
 func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int, error) {
 	//TODO нормально ли userID передавать через context?
 	if userID, ok := ctx.Value("userID").(string); ok && userID != "" {
 		err := o.orderRepository.CreateOrder(orderNumber, userID, nil)
-
-		//TODO Тут должна быть какая-то горутина
 
 		if err != nil {
 			if errors.Is(err, &lib.ErrOrderAlreadyCreated{}) {
@@ -101,8 +104,41 @@ func (o ServiceOrder) Withdraw(ctx context.Context, toWithdraw models.WithdrawRe
 	return http.StatusOK, nil
 }
 
-func NewOrderService(orderRepository orderRepository) *ServiceOrder {
+func (o ServiceOrder) Withdrawals(ctx context.Context) ([]models.WithdrawalsResponse, error) {
+	userID, ok := ctx.Value("userID").(string)
+	if !ok || userID == "" {
+		return nil, &lib.NotFoundUserIDInContext{}
+	}
+
+	res, err := o.orderRepository.Withdrawals(userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (o ServiceOrder) UpdateOrderStatus(orderNumber string) error {
+	order, err := lib.GetOrderInfo(fmt.Sprintf("%s/api/orders/%s", o.cfg.AccrualSystemAddress, orderNumber))
+
+	if err != nil {
+		return err
+	}
+
+	if order.Status == "INVALID" || order.Status == "PROCESSED" {
+		err = o.orderRepository.Update(order.Order, order.Status, order.Accrual)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
+
+	return nil
+}
+
+func NewOrderService(orderRepository orderRepository, cfg *config.Config) *ServiceOrder {
 	return &ServiceOrder{
 		orderRepository: orderRepository,
+		cfg:             cfg,
 	}
 }

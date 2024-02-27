@@ -31,7 +31,7 @@ func CreateApp(logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	userService := user.NewUserService(userRepository)
-	orderService := order.NewOrderService(userRepository)
+	orderService := order.NewOrderService(userRepository, cfg)
 
 	handler := handlers.NewHandler(logger, userService, orderService)
 

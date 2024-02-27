@@ -16,12 +16,13 @@ type UserRegisterOrLoginRequest struct {
 }
 
 type Order struct {
-	Number     string    `json:"number"`
-	UserUuid   string    `json:"-"`
-	Status     string    `json:"status"`
-	Accrual    *float64  `json:"accrual,omitempty"`
-	Withdraw   *float64  `json:"withdraw,omitempty"`
-	UploadedAt time.Time `json:"uploaded_at"`
+	Number      string    `json:"number"`
+	UserUuid    string    `json:"-"`
+	Status      string    `json:"status"`
+	Accrual     *float64  `json:"accrual,omitempty"`
+	Withdraw    *float64  `json:"withdraw,omitempty"`
+	ProcessedAt time.Time `json:"processed_at,omitempty"`
+	UploadedAt  time.Time `json:"uploaded_at"`
 }
 
 type UserBalanceResponse struct {
@@ -32,4 +33,16 @@ type UserBalanceResponse struct {
 type WithdrawRequest struct {
 	Order string `json:"order"`
 	Sum   int    `json:"sum"`
+}
+
+type WithdrawalsResponse struct {
+	Order       string    `json:"order"`
+	Sum         float64   `json:"sum"`
+	ProcessedAt time.Time `json:"processed_at"`
+}
+
+type OrderInfo struct {
+	Order   string   `json:"order"`
+	Status  string   `json:"status"`
+	Accrual *float64 `json:"accrual,omitempty"`
 }

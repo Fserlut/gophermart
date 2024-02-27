@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/Fserlut/gophermart/internal/lib"
 	"github.com/Fserlut/gophermart/internal/models"
 	"github.com/Fserlut/gophermart/internal/services/order"
@@ -16,8 +17,9 @@ type Handler struct {
 	logger *slog.Logger
 
 	// TODO тут не лучше использовать интерфейс?
-	userService  *user.ServiceUser
-	orderService *order.ServiceOrder
+	userService   *user.ServiceUser
+	orderService  *order.ServiceOrder
+	ordersChannel chan string
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +110,10 @@ func (h *Handler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 
 	code, _ := h.orderService.CreateOrder(r.Context(), orderNumber)
 
+	if code == http.StatusAccepted {
+		h.ordersChannel <- orderNumber
+	}
+
 	w.WriteHeader(code)
 }
 
@@ -166,10 +172,35 @@ func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(code)
 }
 
-func NewHandler(log *slog.Logger, userService *user.ServiceUser, orderService *order.ServiceOrder) *Handler {
-	return &Handler{
-		logger:       log,
-		userService:  userService,
-		orderService: orderService,
+func (h *Handler) Withdrawals(w http.ResponseWriter, r *http.Request) {
+	res, err := h.orderService.Withdrawals(r.Context())
+
+	if err != nil {
+		h.logger.Error("Error from order service", err.Error())
+		w.WriteHeader(http.StatusInternalServerError)
+		return
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(res)
+}
+
+func NewHandler(log *slog.Logger, userService *user.ServiceUser, orderService *order.ServiceOrder) *Handler {
+
+	h := &Handler{
+		logger:        log,
+		userService:   userService,
+		orderService:  orderService,
+		ordersChannel: make(chan string, 100),
+	}
+
+	go func() {
+		for orderNumber := range h.ordersChannel {
+			err := h.orderService.UpdateOrderStatus(orderNumber)
+			if err != nil {
+				h.logger.Error(fmt.Sprintf("Error on delete url %s", err.Error()))
+			}
+		}
+	}()
+	return h
 }
