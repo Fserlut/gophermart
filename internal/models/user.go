@@ -17,7 +17,7 @@ type UserRegisterOrLoginRequest struct {
 
 type Order struct {
 	Number      string    `json:"number"`
-	UserUuid    string    `json:"-"`
+	UserUUID    string    `json:"-"`
 	Status      string    `json:"status"`
 	Accrual     *float64  `json:"accrual,omitempty"`
 	Withdraw    *float64  `json:"withdraw,omitempty"`

@@ -70,10 +70,10 @@ func (d *Database) GetOrderByNumber(orderNumber string) (*models.Order, error) {
 	return nil, nil
 }
 
-func (d *Database) CreateOrder(orderNumber string, userUUID string, withdraw *float64) error {
+func (d *Database) CreateOrder(orderNumber string, UserUUID string, withdraw *float64) error {
 	res, err := d.db.ExecContext(
 		context.Background(),
-		`INSERT INTO orders (number, user_uuid, withdraw) VALUES ($1, $2, $3) ON CONFLICT (number) DO NOTHING`, orderNumber, userUUID, withdraw,
+		`INSERT INTO orders (number, user_uuid, withdraw) VALUES ($1, $2, $3) ON CONFLICT (number) DO NOTHING`, orderNumber, UserUUID, withdraw,
 	)
 
 	if err != nil {
@@ -97,7 +97,7 @@ func (d *Database) CreateOrder(orderNumber string, userUUID string, withdraw *fl
 		if err != nil {
 			return err
 		}
-		if userID != userUUID {
+		if userID != UserUUID {
 			return &lib.ErrOrderAlreadyCreatedByOtherUser{}
 		}
 		return &lib.ErrOrderAlreadyCreated{}

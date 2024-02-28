@@ -18,7 +18,7 @@ type ServiceOrder struct {
 
 type orderRepository interface {
 	GetOrderByNumber(string) (*models.Order, error)
-	CreateOrder(orderNumber string, userUUID string, withdraw *float64) error
+	CreateOrder(orderNumber string, UserUUID string, withdraw *float64) error
 	GetOrdersByUserID(string) ([]models.Order, error)
 	GetUserBalance(string) (*models.UserBalanceResponse, error)
 	Withdrawals(string) ([]models.WithdrawalsResponse, error)
