@@ -196,15 +196,6 @@ func NewHandler(log *slog.Logger, userService *user.ServiceUser, orderService *o
 		ordersChannel: make(chan string, 100),
 	}
 
-	//go func() {
-	//	for orderNumber := range h.ordersChannel {
-	//		err := h.orderService.UpdateOrderStatus(orderNumber)
-	//		if err != nil {
-	//			h.logger.Error(fmt.Sprintf("Error on delete url %s", err.Error()))
-	//		}
-	//	}
-	//}()
-
 	go func() {
 		for orderNumber := range h.ordersChannel {
 		Retry:

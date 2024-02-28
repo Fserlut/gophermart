@@ -17,6 +17,10 @@ const TokenExp = time.Hour * 1
 const SecretKey = "supersecretkey"
 const CookieName = "auth"
 
+type contextKey string
+
+const UserContextKey contextKey = "userID"
+
 func GenerateAuthCookie(userID string) (*http.Cookie, error) {
 	token, err := generateJWTString(userID)
 	if err != nil {

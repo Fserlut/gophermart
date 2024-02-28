@@ -26,28 +26,29 @@ type orderRepository interface {
 }
 
 func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int, error) {
-	//TODO нормально ли userID передавать через context?
-	if userID, ok := ctx.Value("userID").(string); ok && userID != "" {
-		err := o.orderRepository.CreateOrder(orderNumber, userID, nil)
+	userID, ok := ctx.Value(lib.UserContextKey).(string)
+	fmt.Println(userID, ok)
+	if !ok || userID == "" {
+		return http.StatusUnauthorized, &lib.NotFoundUserIDInContext{}
+	}
 
-		if err != nil {
-			if errors.Is(err, &lib.ErrOrderAlreadyCreated{}) {
-				return http.StatusOK, nil
-			} else if errors.Is(err, &lib.ErrOrderAlreadyCreatedByOtherUser{}) {
-				return http.StatusConflict, nil
-			}
+	err := o.orderRepository.CreateOrder(orderNumber, userID, nil)
 
-			return http.StatusInternalServerError, err
+	if err != nil {
+		if errors.Is(err, &lib.ErrOrderAlreadyCreated{}) {
+			return http.StatusOK, nil
+		} else if errors.Is(err, &lib.ErrOrderAlreadyCreatedByOtherUser{}) {
+			return http.StatusConflict, nil
 		}
 
-		return http.StatusAccepted, nil
+		return http.StatusInternalServerError, err
 	}
-	//TODO нормально ли возвращать код ответа?
-	return http.StatusUnauthorized, errors.New("unauthorized")
+
+	return http.StatusAccepted, nil
 }
 
 func (o ServiceOrder) GetOrdersByUserID(ctx context.Context) ([]models.Order, error) {
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return nil, &lib.NotFoundUserIDInContext{}
 	}
@@ -61,7 +62,7 @@ func (o ServiceOrder) GetOrdersByUserID(ctx context.Context) ([]models.Order, er
 }
 
 func (o ServiceOrder) GetUserBalance(ctx context.Context) (*models.UserBalanceResponse, error) {
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return nil, &lib.NotFoundUserIDInContext{}
 	}
@@ -76,7 +77,7 @@ func (o ServiceOrder) GetUserBalance(ctx context.Context) (*models.UserBalanceRe
 }
 
 func (o ServiceOrder) Withdraw(ctx context.Context, toWithdraw models.WithdrawRequest) (int, error) {
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return http.StatusUnauthorized, &lib.NotFoundUserIDInContext{}
 	}
@@ -105,7 +106,7 @@ func (o ServiceOrder) Withdraw(ctx context.Context, toWithdraw models.WithdrawRe
 }
 
 func (o ServiceOrder) Withdrawals(ctx context.Context) ([]models.WithdrawalsResponse, error) {
-	userID, ok := ctx.Value("userID").(string)
+	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return nil, &lib.NotFoundUserIDInContext{}
 	}
@@ -134,7 +135,7 @@ func (o ServiceOrder) UpdateOrderStatus(orderNumber string) error {
 	}
 
 	if order.Status == "REGISTERED" {
-		return errors.New("not finished")
+		return fmt.Errorf("not finished")
 	}
 
 	return nil

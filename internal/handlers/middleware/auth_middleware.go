@@ -10,10 +10,6 @@ import (
 	"github.com/Fserlut/gophermart/internal/lib"
 )
 
-type contextKey string
-
-const userContextKey contextKey = "userID"
-
 func AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie(lib.CookieName)
@@ -34,7 +30,7 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), userContextKey, claims.UserID)
+		ctx := context.WithValue(r.Context(), lib.UserContextKey, claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
