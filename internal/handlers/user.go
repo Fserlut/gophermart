@@ -11,6 +11,8 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
+	"time"
 )
 
 type Handler struct {
@@ -194,13 +196,31 @@ func NewHandler(log *slog.Logger, userService *user.ServiceUser, orderService *o
 		ordersChannel: make(chan string, 100),
 	}
 
+	//go func() {
+	//	for orderNumber := range h.ordersChannel {
+	//		err := h.orderService.UpdateOrderStatus(orderNumber)
+	//		if err != nil {
+	//			h.logger.Error(fmt.Sprintf("Error on delete url %s", err.Error()))
+	//		}
+	//	}
+	//}()
+
 	go func() {
 		for orderNumber := range h.ordersChannel {
+		Retry:
 			err := h.orderService.UpdateOrderStatus(orderNumber)
 			if err != nil {
-				h.logger.Error(fmt.Sprintf("Error on delete url %s", err.Error()))
+				if strings.Contains(err.Error(), "rate limit exceeded") {
+					h.logger.Error("Rate limit exceeded, retrying after 1 minute")
+					time.Sleep(1 * time.Minute) // Ожидание 1 минуты перед повторной попыткой
+					goto Retry                  // Повторная попытка выполнения запроса после задержки
+				} else {
+					h.logger.Error(fmt.Sprintf("Error updating order status: %s", err.Error()))
+					continue // Продолжить с следующим заказом в канале
+				}
 			}
 		}
 	}()
+
 	return h
 }
