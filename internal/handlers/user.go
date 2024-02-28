@@ -210,19 +210,17 @@ func NewHandler(log *slog.Logger, userService *user.ServiceUser, orderService *o
 		Retry:
 			err := h.orderService.UpdateOrderStatus(orderNumber)
 			if err != nil {
-				if err != nil {
-					errMsg := err.Error()
-					if strings.Contains(errMsg, "rate limit exceeded") {
-						h.logger.Error("Rate limit exceeded, retrying after 1 minute")
-						time.Sleep(1 * time.Minute) // Ожидание перед повторной попыткой
-						goto Retry
-					} else if strings.Contains(errMsg, "not finished") {
-						h.logger.Error("Order not finished, retrying later")
-						go func() { h.ordersChannel <- orderNumber }()
-						continue
-					} else {
-						h.logger.Error(fmt.Sprintf("Error getting order info: %s", errMsg))
-					}
+				errMsg := err.Error()
+				if strings.Contains(errMsg, "rate limit exceeded") {
+					h.logger.Error("Rate limit exceeded, retrying after 1 minute")
+					time.Sleep(1 * time.Minute) // Ожидание перед повторной попыткой
+					goto Retry
+				} else if strings.Contains(errMsg, "not finished") {
+					h.logger.Error("Order not finished, retrying later")
+					go func() { h.ordersChannel <- orderNumber }()
+					continue
+				} else {
+					h.logger.Error(fmt.Sprintf("Error getting order info: %s", errMsg))
 				}
 			}
 		}
