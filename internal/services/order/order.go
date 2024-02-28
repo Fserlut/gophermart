@@ -133,6 +133,10 @@ func (o ServiceOrder) UpdateOrderStatus(orderNumber string) error {
 		return nil
 	}
 
+	if order.Status == "REGISTERED" {
+		return errors.New("not finished")
+	}
+
 	return nil
 }
 
