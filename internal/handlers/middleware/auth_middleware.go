@@ -34,7 +34,6 @@ func AuthMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		// Используем определенный нами тип в качестве ключа для контекста
 		ctx := context.WithValue(r.Context(), userContextKey, claims.UserID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
