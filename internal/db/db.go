@@ -155,7 +155,10 @@ func (d *Database) GetUserBalance(userID string) (*models.UserBalanceResponse, e
 		return nil, fmt.Errorf("error querying user balance: %w", err)
 	}
 
-	return &response, nil
+	return &models.UserBalanceResponse{
+		Current:   response.Current - response.Withdrawn,
+		Withdrawn: response.Withdrawn,
+	}, nil
 }
 
 func (d *Database) Withdrawals(userID string) ([]models.WithdrawalsResponse, error) {
