@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net/http"
 
 	"github.com/Fserlut/gophermart/internal/config"
@@ -13,6 +14,7 @@ import (
 )
 
 type ServiceOrder struct {
+	logger          *slog.Logger
 	orderRepository orderRepository
 	cfg             *config.Config
 }
@@ -121,29 +123,30 @@ func (o ServiceOrder) Withdrawals(ctx context.Context) ([]user.WithdrawalsRespon
 }
 
 func (o ServiceOrder) UpdateOrderStatus(orderNumber string) error {
-	order, err := lib.GetOrderInfo(fmt.Sprintf("%s/api/orders/%s", o.cfg.AccrualSystemAddress, orderNumber))
+	orderResult, err := lib.GetOrderInfo(fmt.Sprintf("%s/api/orders/%s", o.cfg.AccrualSystemAddress, orderNumber))
 
 	if err != nil {
 		return err
 	}
 
-	if order.Status == "INVALID" || order.Status == "PROCESSED" {
-		err = o.orderRepository.Update(order.Order, order.Status, order.Accrual)
+	if orderResult.Status == "INVALID" || orderResult.Status == "PROCESSED" {
+		err = o.orderRepository.Update(orderResult.Order, orderResult.Status, orderResult.Accrual)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	if order.Status == "REGISTERED" {
+	if orderResult.Status == "REGISTERED" {
 		return fmt.Errorf("not finished")
 	}
 
 	return nil
 }
 
-func NewOrderService(orderRepository orderRepository, cfg *config.Config) *ServiceOrder {
+func NewOrderService(log *slog.Logger, orderRepository orderRepository, cfg *config.Config) *ServiceOrder {
 	return &ServiceOrder{
+		logger:          log,
 		orderRepository: orderRepository,
 		cfg:             cfg,
 	}
