@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/Fserlut/gophermart/internal/config"
 	"net/http"
 
+	"github.com/Fserlut/gophermart/internal/config"
 	"github.com/Fserlut/gophermart/internal/lib"
-	"github.com/Fserlut/gophermart/internal/models"
+	"github.com/Fserlut/gophermart/internal/models/order"
+	"github.com/Fserlut/gophermart/internal/models/user"
 )
 
 type ServiceOrder struct {
@@ -17,11 +18,11 @@ type ServiceOrder struct {
 }
 
 type orderRepository interface {
-	GetOrderByNumber(string) (*models.Order, error)
+	GetOrderByNumber(string) (*order.Order, error)
 	CreateOrder(orderNumber string, UserUUID string, withdraw *float64) error
-	GetOrdersByUserID(string) ([]models.Order, error)
-	GetUserBalance(string) (*models.UserBalanceResponse, error)
-	Withdrawals(string) ([]models.WithdrawalsResponse, error)
+	GetOrdersByUserID(string) ([]order.Order, error)
+	GetUserBalance(string) (*user.BalanceResponse, error)
+	Withdrawals(string) ([]user.WithdrawalsResponse, error)
 	Update(orderNumber string, status string, accrual *float64) error
 }
 
@@ -47,7 +48,7 @@ func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int,
 	return http.StatusAccepted, nil
 }
 
-func (o ServiceOrder) GetOrdersByUserID(ctx context.Context) ([]models.Order, error) {
+func (o ServiceOrder) GetOrdersByUserID(ctx context.Context) ([]order.Order, error) {
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return nil, &lib.NotFoundUserIDInContext{}
@@ -61,7 +62,7 @@ func (o ServiceOrder) GetOrdersByUserID(ctx context.Context) ([]models.Order, er
 	return orders, nil
 }
 
-func (o ServiceOrder) GetUserBalance(ctx context.Context) (*models.UserBalanceResponse, error) {
+func (o ServiceOrder) GetUserBalance(ctx context.Context) (*user.BalanceResponse, error) {
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return nil, &lib.NotFoundUserIDInContext{}
@@ -76,7 +77,7 @@ func (o ServiceOrder) GetUserBalance(ctx context.Context) (*models.UserBalanceRe
 	return balance, nil
 }
 
-func (o ServiceOrder) Withdraw(ctx context.Context, toWithdraw models.WithdrawRequest) (int, error) {
+func (o ServiceOrder) Withdraw(ctx context.Context, toWithdraw user.WithdrawRequest) (int, error) {
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return http.StatusUnauthorized, &lib.NotFoundUserIDInContext{}
@@ -105,7 +106,7 @@ func (o ServiceOrder) Withdraw(ctx context.Context, toWithdraw models.WithdrawRe
 	return http.StatusOK, nil
 }
 
-func (o ServiceOrder) Withdrawals(ctx context.Context) ([]models.WithdrawalsResponse, error) {
+func (o ServiceOrder) Withdrawals(ctx context.Context) ([]user.WithdrawalsResponse, error) {
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return nil, &lib.NotFoundUserIDInContext{}

@@ -7,7 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 
 	"github.com/Fserlut/gophermart/internal/lib"
-	"github.com/Fserlut/gophermart/internal/models"
+	"github.com/Fserlut/gophermart/internal/models/user"
 )
 
 type ServiceUser struct {
@@ -15,8 +15,8 @@ type ServiceUser struct {
 }
 
 type userRepository interface {
-	CreateUser(models.User) error
-	GetUserByLogin(string) (*models.User, error)
+	CreateUser(user.User) error
+	GetUserByLogin(string) (*user.User, error)
 }
 
 func hashPassword(password string) (string, error) {
@@ -32,13 +32,13 @@ func verifyPassword(hashedPassword, password string) bool {
 	return err == nil
 }
 
-func (u ServiceUser) Register(userCreate models.UserRegisterOrLoginRequest) (*http.Cookie, error) {
+func (u ServiceUser) Register(userCreate user.RegisterOrLoginRequest) (*http.Cookie, error) {
 	hashPass, err := hashPassword(userCreate.Password)
 	if err != nil {
 		return nil, err
 	}
 
-	user := models.User{
+	user := user.User{
 		UUID:     uuid.New().String(),
 		Login:    userCreate.Login,
 		Password: hashPass,
@@ -55,7 +55,7 @@ func (u ServiceUser) Register(userCreate models.UserRegisterOrLoginRequest) (*ht
 	return authCookie, nil
 }
 
-func (u ServiceUser) Login(userCreate models.UserRegisterOrLoginRequest) (*http.Cookie, error) {
+func (u ServiceUser) Login(userCreate user.RegisterOrLoginRequest) (*http.Cookie, error) {
 	user, err := u.userRepository.GetUserByLogin(userCreate.Login)
 	if err != nil {
 		return nil, err

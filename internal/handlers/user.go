@@ -4,15 +4,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Fserlut/gophermart/internal/lib"
-	"github.com/Fserlut/gophermart/internal/models"
-	"github.com/Fserlut/gophermart/internal/services/order"
-	"github.com/Fserlut/gophermart/internal/services/user"
 	"io"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/Fserlut/gophermart/internal/lib"
+	user2 "github.com/Fserlut/gophermart/internal/models/user"
+	"github.com/Fserlut/gophermart/internal/services/order"
+	"github.com/Fserlut/gophermart/internal/services/user"
 )
 
 type Handler struct {
@@ -25,7 +26,7 @@ type Handler struct {
 }
 
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
-	var req models.UserRegisterOrLoginRequest
+	var req user2.RegisterOrLoginRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("Error on decode request", err.Error())
@@ -59,7 +60,7 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
-	var req models.UserRegisterOrLoginRequest
+	var req user2.RegisterOrLoginRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("Error on decode request", err.Error())
@@ -150,7 +151,7 @@ func (h *Handler) GetUserBalance(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Withdraw(w http.ResponseWriter, r *http.Request) {
-	var req models.WithdrawRequest
+	var req user2.WithdrawRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.logger.Error("Error on decode request", err.Error())

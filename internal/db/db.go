@@ -5,18 +5,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Fserlut/gophermart/internal/lib"
-	_ "github.com/lib/pq"
 	"log"
 
-	"github.com/Fserlut/gophermart/internal/models"
+	_ "github.com/lib/pq"
+
+	"github.com/Fserlut/gophermart/internal/lib"
+	"github.com/Fserlut/gophermart/internal/models/order"
+	"github.com/Fserlut/gophermart/internal/models/user"
 )
 
 type Database struct {
 	db *sql.DB
 }
 
-func (d *Database) CreateUser(userCreate models.User) error {
+func (d *Database) CreateUser(userCreate user.User) error {
 	res, err := d.db.ExecContext(
 		context.Background(),
 		`INSERT INTO users (uuid, login, password) VALUES ($1, $2, $3) ON CONFLICT (login) DO NOTHING`, userCreate.UUID, userCreate.Login, userCreate.Password,
@@ -39,7 +41,7 @@ func (d *Database) CreateUser(userCreate models.User) error {
 	return nil
 }
 
-func (d *Database) GetUserByLogin(loginToFind string) (*models.User, error) {
+func (d *Database) GetUserByLogin(loginToFind string) (*user.User, error) {
 	var (
 		uuid     string
 		login    string
@@ -59,14 +61,14 @@ func (d *Database) GetUserByLogin(loginToFind string) (*models.User, error) {
 		}
 	}
 
-	return &models.User{
+	return &user.User{
 		UUID:     uuid,
 		Login:    login,
 		Password: password,
 	}, nil
 }
 
-func (d *Database) GetOrderByNumber(orderNumber string) (*models.Order, error) {
+func (d *Database) GetOrderByNumber(orderNumber string) (*order.Order, error) {
 	return nil, nil
 }
 
@@ -106,7 +108,7 @@ func (d *Database) CreateOrder(orderNumber string, UserUUID string, withdraw *fl
 	return nil
 }
 
-func (d *Database) GetOrdersByUserID(userID string) ([]models.Order, error) {
+func (d *Database) GetOrdersByUserID(userID string) ([]order.Order, error) {
 	query := `SELECT number, status, uploaded_at, accrual FROM orders WHERE user_uuid = $1`
 
 	rows, err := d.db.QueryContext(context.Background(), query, userID)
@@ -116,10 +118,10 @@ func (d *Database) GetOrdersByUserID(userID string) ([]models.Order, error) {
 	}
 	defer rows.Close()
 
-	var orders []models.Order
+	var orders []order.Order
 
 	for rows.Next() {
-		var order models.Order
+		var order order.Order
 		var accrual sql.NullFloat64
 		if err := rows.Scan(&order.Number, &order.Status, &order.UploadedAt, &accrual); err != nil {
 			log.Printf("Error scanning order for userID %s: %v", userID, err)
@@ -139,8 +141,8 @@ func (d *Database) GetOrdersByUserID(userID string) ([]models.Order, error) {
 	return orders, nil
 }
 
-func (d *Database) GetUserBalance(userID string) (*models.UserBalanceResponse, error) {
-	var response models.UserBalanceResponse
+func (d *Database) GetUserBalance(userID string) (*user.BalanceResponse, error) {
+	var response user.BalanceResponse
 
 	query := `
 	SELECT
@@ -155,13 +157,13 @@ func (d *Database) GetUserBalance(userID string) (*models.UserBalanceResponse, e
 		return nil, fmt.Errorf("error querying user balance: %w", err)
 	}
 
-	return &models.UserBalanceResponse{
+	return &user.BalanceResponse{
 		Current:   response.Current - response.Withdrawn,
 		Withdrawn: response.Withdrawn,
 	}, nil
 }
 
-func (d *Database) Withdrawals(userID string) ([]models.WithdrawalsResponse, error) {
+func (d *Database) Withdrawals(userID string) ([]user.WithdrawalsResponse, error) {
 	query := `SELECT number, withdraw, processed_at FROM orders WHERE user_uuid = $1 AND withdraw > 0`
 
 	rows, err := d.db.QueryContext(context.Background(), query, userID)
@@ -171,10 +173,10 @@ func (d *Database) Withdrawals(userID string) ([]models.WithdrawalsResponse, err
 	}
 	defer rows.Close()
 
-	var res []models.WithdrawalsResponse
+	var res []user.WithdrawalsResponse
 
 	for rows.Next() {
-		var resItem models.WithdrawalsResponse
+		var resItem user.WithdrawalsResponse
 		if err := rows.Scan(&resItem.Order, &resItem.Sum, &resItem.ProcessedAt); err != nil {
 			log.Printf("Error scanning order for userID %s: %v", userID, err)
 			return nil, err

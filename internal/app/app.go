@@ -2,8 +2,6 @@ package app
 
 import (
 	"fmt"
-	"github.com/Fserlut/gophermart/internal/services/order"
-	"github.com/Fserlut/gophermart/internal/services/user"
 	"log/slog"
 	"net/http"
 
@@ -13,6 +11,8 @@ import (
 	"github.com/Fserlut/gophermart/internal/db"
 	"github.com/Fserlut/gophermart/internal/handlers"
 	"github.com/Fserlut/gophermart/internal/router"
+	"github.com/Fserlut/gophermart/internal/services/order"
+	"github.com/Fserlut/gophermart/internal/services/user"
 )
 
 type App struct {
