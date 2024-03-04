@@ -3,11 +3,12 @@ package lib
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Fserlut/gophermart/internal/models"
 	"net/http"
+
+	"github.com/Fserlut/gophermart/internal/models/order"
 )
 
-func GetOrderInfo(link string) (*models.OrderInfo, error) {
+func GetOrderInfo(link string) (*order.OrderInfo, error) {
 	client := &http.Client{}
 
 	req, err := http.NewRequest("GET", link, nil)
@@ -23,7 +24,7 @@ func GetOrderInfo(link string) (*models.OrderInfo, error) {
 
 	switch resp.StatusCode {
 	case http.StatusOK:
-		var info models.OrderInfo
+		var info order.OrderInfo
 		if err := json.NewDecoder(resp.Body).Decode(&info); err != nil {
 			return nil, fmt.Errorf("decoding response: %w", err)
 		}

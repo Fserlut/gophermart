@@ -2,8 +2,7 @@ package app
 
 import (
 	"fmt"
-	"github.com/Fserlut/gophermart/internal/services/order"
-	"github.com/Fserlut/gophermart/internal/services/user"
+	order2 "github.com/Fserlut/gophermart/internal/handlers/order"
 	"log/slog"
 	"net/http"
 
@@ -11,8 +10,10 @@ import (
 
 	"github.com/Fserlut/gophermart/internal/config"
 	"github.com/Fserlut/gophermart/internal/db"
-	"github.com/Fserlut/gophermart/internal/handlers"
+	user2 "github.com/Fserlut/gophermart/internal/handlers/user"
 	"github.com/Fserlut/gophermart/internal/router"
+	"github.com/Fserlut/gophermart/internal/services/order"
+	"github.com/Fserlut/gophermart/internal/services/user"
 )
 
 type App struct {
@@ -31,11 +32,13 @@ func CreateApp(logger *slog.Logger, cfg *config.Config) *App {
 	}
 
 	userService := user.NewUserService(userRepository)
-	orderService := order.NewOrderService(userRepository, cfg)
+	orderService := order.NewOrderService(logger, userRepository, cfg)
 
-	handler := handlers.NewHandler(logger, userService, orderService)
+	userHandler := user2.NewUserHandler(logger, userService)
 
-	r := router.NewRouter(handler)
+	orderHandler := order2.NewOrderHandler(logger, orderService)
+
+	r := router.NewRouter(userHandler, orderHandler)
 
 	return &App{
 		Router: r,

@@ -1,14 +1,15 @@
 package router
 
 import (
+	"github.com/Fserlut/gophermart/internal/handlers/order"
+	"github.com/Fserlut/gophermart/internal/handlers/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
-	"github.com/Fserlut/gophermart/internal/handlers"
 	authMiddleware "github.com/Fserlut/gophermart/internal/handlers/middleware"
 )
 
-func NewRouter(handler *handlers.Handler) *chi.Mux {
+func NewRouter(userHandler *user.UserHandler, orderHandler *order.OrderHandler) *chi.Mux {
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -19,14 +20,14 @@ func NewRouter(handler *handlers.Handler) *chi.Mux {
 
 	router.Route("/api", func(r chi.Router) {
 		r.Route("/user", func(r chi.Router) {
-			r.Post("/register", handler.Register)
-			r.Post("/login", handler.Login)
+			r.Post("/register", userHandler.Register)
+			r.Post("/login", userHandler.Login)
 
-			r.With(authMiddleware.AuthMiddleware).Post("/orders", handler.CreateOrder)
-			r.With(authMiddleware.AuthMiddleware).Get("/orders", handler.GetOrders)
-			r.With(authMiddleware.AuthMiddleware).Get("/balance", handler.GetUserBalance)
-			r.With(authMiddleware.AuthMiddleware).Post("/balance/withdraw", handler.Withdraw)
-			r.With(authMiddleware.AuthMiddleware).Get("/withdrawals", handler.Withdrawals)
+			r.With(authMiddleware.AuthMiddleware).Post("/orders", orderHandler.CreateOrder)
+			r.With(authMiddleware.AuthMiddleware).Get("/orders", orderHandler.GetOrders)
+			r.With(authMiddleware.AuthMiddleware).Get("/balance", orderHandler.GetUserBalance)
+			r.With(authMiddleware.AuthMiddleware).Post("/balance/withdraw", orderHandler.Withdraw)
+			r.With(authMiddleware.AuthMiddleware).Get("/withdrawals", orderHandler.Withdrawals)
 		})
 	})
 
