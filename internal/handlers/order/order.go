@@ -126,7 +126,7 @@ func NewOrderHandler(log *slog.Logger, orderService *order.ServiceOrder) *OrderH
 				errMsg := err.Error()
 				if strings.Contains(errMsg, "rate limit exceeded") {
 					h.logger.Error("Rate limit exceeded, retrying after 1 minute")
-					time.Sleep(1 * time.Minute) // Ожидание перед повторной попыткой
+					time.Sleep(1 * time.Minute)
 					goto Retry
 				} else if strings.Contains(errMsg, "not finished") {
 					h.logger.Error("Order not finished, retrying later")

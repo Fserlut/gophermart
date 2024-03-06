@@ -23,12 +23,11 @@ type App struct {
 	config *config.Config
 }
 
-func CreateApp(logger *slog.Logger, cfg *config.Config) *App {
-	//TODO норм ли это создавать все именно тут?
+func CreateApp(logger *slog.Logger, cfg *config.Config) (*App, error) {
 	userRepository, err := db.NewDB(cfg.DatabaseURI)
 	if err != nil {
 		logger.Error("error on init db: ", err.Error())
-		panic(err.Error())
+		return nil, err
 	}
 
 	userService := user.NewUserService(userRepository)
@@ -48,7 +47,7 @@ func CreateApp(logger *slog.Logger, cfg *config.Config) *App {
 			Addr:    cfg.RunAddress,
 			Handler: r,
 		},
-	}
+	}, nil
 }
 
 func (a *App) Run() {
