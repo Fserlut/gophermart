@@ -29,8 +29,8 @@ type orderRepository interface {
 }
 
 func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int, error) {
+	//TODO нормально ли тут возвращать статусы?
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
-	fmt.Println(userID, ok)
 	if !ok || userID == "" {
 		return http.StatusUnauthorized, &lib.NotFoundUserIDInContext{}
 	}

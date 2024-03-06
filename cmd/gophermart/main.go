@@ -11,7 +11,12 @@ func main() {
 
 	log := logger.SetupLogger()
 
-	server := app.CreateApp(log, cfg)
+	server, err := app.CreateApp(log, cfg)
+
+	if err != nil {
+		log.Error("create app error")
+		return
+	}
 
 	server.Run()
 }

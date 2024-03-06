@@ -1,12 +1,12 @@
 package router
 
 import (
-	"github.com/Fserlut/gophermart/internal/handlers/order"
-	"github.com/Fserlut/gophermart/internal/handlers/user"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 
 	authMiddleware "github.com/Fserlut/gophermart/internal/handlers/middleware"
+	"github.com/Fserlut/gophermart/internal/handlers/order"
+	"github.com/Fserlut/gophermart/internal/handlers/user"
 )
 
 func NewRouter(userHandler *user.UserHandler, orderHandler *order.OrderHandler) *chi.Mux {
