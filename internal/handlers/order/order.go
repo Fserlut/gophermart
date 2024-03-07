@@ -2,21 +2,17 @@ package order
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/Fserlut/gophermart/internal/lib"
 	user2 "github.com/Fserlut/gophermart/internal/models/user"
 	"github.com/Fserlut/gophermart/internal/services/order"
 	"io"
 	"log/slog"
 	"net/http"
-	"strings"
-	"time"
 )
 
 type OrderHandler struct {
-	logger        *slog.Logger
-	orderService  *order.ServiceOrder
-	ordersChannel chan string
+	logger       *slog.Logger
+	orderService *order.ServiceOrder
 }
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
@@ -34,10 +30,6 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	code, _ := h.orderService.CreateOrder(r.Context(), orderNumber)
-
-	if code == http.StatusAccepted {
-		h.ordersChannel <- orderNumber
-	}
 
 	w.WriteHeader(code)
 }
@@ -111,33 +103,8 @@ func (h *OrderHandler) Withdrawals(w http.ResponseWriter, r *http.Request) {
 }
 
 func NewOrderHandler(log *slog.Logger, orderService *order.ServiceOrder) *OrderHandler {
-
-	h := &OrderHandler{
-		logger:        log,
-		orderService:  orderService,
-		ordersChannel: make(chan string, 100),
+	return &OrderHandler{
+		logger:       log,
+		orderService: orderService,
 	}
-
-	go func() {
-		for orderNumber := range h.ordersChannel {
-		Retry:
-			err := h.orderService.UpdateOrderStatus(orderNumber)
-			if err != nil {
-				errMsg := err.Error()
-				if strings.Contains(errMsg, "rate limit exceeded") {
-					h.logger.Error("Rate limit exceeded, retrying after 1 minute")
-					time.Sleep(1 * time.Minute)
-					goto Retry
-				} else if strings.Contains(errMsg, "not finished") {
-					h.logger.Error("Order not finished, retrying later")
-					go func() { h.ordersChannel <- orderNumber }()
-					continue
-				} else {
-					h.logger.Error(fmt.Sprintf("Error getting order info: %s", errMsg))
-				}
-			}
-		}
-	}()
-
-	return h
 }

@@ -192,7 +192,7 @@ func (d *Database) Withdrawals(userID string) ([]user.WithdrawalsResponse, error
 	return res, nil
 }
 
-func (d *Database) Update(orderNumber string, status string, accrual *float64) error {
+func (d *Database) UpdateOrder(orderNumber string, status string, accrual *float64) error {
 	var query string
 	if accrual != nil {
 		query = `UPDATE orders SET status = $2, accrual = $3 WHERE number = $1`

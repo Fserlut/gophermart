@@ -3,7 +3,6 @@ package order
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 
@@ -15,8 +14,9 @@ import (
 
 type ServiceOrder struct {
 	logger          *slog.Logger
-	orderRepository orderRepository
 	cfg             *config.Config
+	orderRepository orderRepository
+	processor       Processor
 }
 
 type orderRepository interface {
@@ -25,11 +25,15 @@ type orderRepository interface {
 	GetOrdersByUserID(string) ([]order.Order, error)
 	GetUserBalance(string) (*user.BalanceResponse, error)
 	Withdrawals(string) ([]user.WithdrawalsResponse, error)
-	Update(orderNumber string, status string, accrual *float64) error
+	UpdateOrder(orderNumber string, status string, accrual *float64) error
+}
+
+type Processor interface {
+	Process(orderNumber string)
 }
 
 func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int, error) {
-	//TODO нормально ли тут возвращать статусы?
+	//TODO нормально ли тут возвращать статусы? NO
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
 		return http.StatusUnauthorized, &lib.NotFoundUserIDInContext{}
@@ -46,6 +50,8 @@ func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int,
 
 		return http.StatusInternalServerError, err
 	}
+
+	o.processor.Process(orderNumber)
 
 	return http.StatusAccepted, nil
 }
@@ -122,32 +128,11 @@ func (o ServiceOrder) Withdrawals(ctx context.Context) ([]user.WithdrawalsRespon
 	return res, nil
 }
 
-func (o ServiceOrder) UpdateOrderStatus(orderNumber string) error {
-	orderResult, err := lib.GetOrderInfo(fmt.Sprintf("%s/api/orders/%s", o.cfg.AccrualSystemAddress, orderNumber))
-
-	if err != nil {
-		return err
-	}
-
-	if orderResult.Status == "INVALID" || orderResult.Status == "PROCESSED" {
-		err = o.orderRepository.Update(orderResult.Order, orderResult.Status, orderResult.Accrual)
-		if err != nil {
-			return err
-		}
-		return nil
-	}
-
-	if orderResult.Status == "REGISTERED" {
-		return fmt.Errorf("not finished")
-	}
-
-	return nil
-}
-
-func NewOrderService(log *slog.Logger, orderRepository orderRepository, cfg *config.Config) *ServiceOrder {
+func NewOrderService(log *slog.Logger, cfg *config.Config, orderRepository orderRepository, processor Processor) *ServiceOrder {
 	return &ServiceOrder{
 		logger:          log,
-		orderRepository: orderRepository,
 		cfg:             cfg,
+		orderRepository: orderRepository,
+		processor:       processor,
 	}
 }

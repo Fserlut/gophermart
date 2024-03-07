@@ -35,3 +35,15 @@ type NotFoundUserIDInContext struct{}
 func (e *NotFoundUserIDInContext) Error() string {
 	return "Unauthorized"
 }
+
+type OrderNotFound struct{}
+
+func (e *OrderNotFound) Error() string {
+	return "order not found"
+}
+
+type TooManyRequestsError struct{}
+
+func (e *TooManyRequestsError) Error() string {
+	return "rate limit exceeded"
+}

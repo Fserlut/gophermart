@@ -30,9 +30,9 @@ func GetOrderInfo(link string) (*order.OrderInfo, error) {
 		}
 		return &info, nil
 	case http.StatusNoContent:
-		return nil, fmt.Errorf("order not found")
+		return nil, &OrderNotFound{}
 	case http.StatusTooManyRequests:
-		return nil, fmt.Errorf("rate limit exceeded")
+		return nil, &TooManyRequestsError{}
 	case http.StatusInternalServerError:
 		return nil, fmt.Errorf("internal server error")
 	default:
