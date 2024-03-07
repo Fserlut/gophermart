@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/Fserlut/gophermart/internal/db"
 	order2 "github.com/Fserlut/gophermart/internal/handlers/order"
 	user2 "github.com/Fserlut/gophermart/internal/handlers/user"
+	"github.com/Fserlut/gophermart/internal/logger"
 	"github.com/Fserlut/gophermart/internal/router"
 	"github.com/Fserlut/gophermart/internal/services/accrual"
 	"github.com/Fserlut/gophermart/internal/services/order"
@@ -22,12 +22,12 @@ import (
 type App struct {
 	Server         *http.Server
 	Router         *chi.Mux
-	logger         *slog.Logger
+	logger         logger.Logger
 	config         *config.Config
 	accrualService *accrual.Accrual
 }
 
-func CreateApp(logger *slog.Logger, cfg *config.Config) (*App, error) {
+func CreateApp(logger logger.Logger, cfg *config.Config) (*App, error) {
 	userRepository, err := db.NewDB(cfg.DatabaseURI)
 	if err != nil {
 		logger.Error("error on init db: ", err.Error())

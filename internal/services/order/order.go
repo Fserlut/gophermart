@@ -3,17 +3,17 @@ package order
 import (
 	"context"
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/Fserlut/gophermart/internal/config"
 	"github.com/Fserlut/gophermart/internal/lib"
+	"github.com/Fserlut/gophermart/internal/logger"
 	"github.com/Fserlut/gophermart/internal/models/order"
 	"github.com/Fserlut/gophermart/internal/models/user"
 )
 
 type ServiceOrder struct {
-	logger          *slog.Logger
+	logger          logger.Logger
 	cfg             *config.Config
 	orderRepository orderRepository
 	processor       Processor
@@ -32,28 +32,21 @@ type Processor interface {
 	Process(orderNumber string)
 }
 
-func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) (int, error) {
-	//TODO нормально ли тут возвращать статусы? NO
+func (o ServiceOrder) CreateOrder(ctx context.Context, orderNumber string) error {
 	userID, ok := ctx.Value(lib.UserContextKey).(string)
 	if !ok || userID == "" {
-		return http.StatusUnauthorized, &lib.NotFoundUserIDInContext{}
+		return &lib.NotFoundUserIDInContext{}
 	}
 
 	err := o.orderRepository.CreateOrder(orderNumber, userID, nil)
 
 	if err != nil {
-		if errors.Is(err, &lib.ErrOrderAlreadyCreated{}) {
-			return http.StatusOK, nil
-		} else if errors.Is(err, &lib.ErrOrderAlreadyCreatedByOtherUser{}) {
-			return http.StatusConflict, nil
-		}
-
-		return http.StatusInternalServerError, err
+		return err
 	}
 
 	o.processor.Process(orderNumber)
 
-	return http.StatusAccepted, nil
+	return nil
 }
 
 func (o ServiceOrder) GetOrdersByUserID(ctx context.Context) ([]order.Order, error) {
@@ -128,7 +121,7 @@ func (o ServiceOrder) Withdrawals(ctx context.Context) ([]user.WithdrawalsRespon
 	return res, nil
 }
 
-func NewOrderService(log *slog.Logger, cfg *config.Config, orderRepository orderRepository, processor Processor) *ServiceOrder {
+func NewOrderService(log logger.Logger, cfg *config.Config, orderRepository orderRepository, processor Processor) *ServiceOrder {
 	return &ServiceOrder{
 		logger:          log,
 		cfg:             cfg,

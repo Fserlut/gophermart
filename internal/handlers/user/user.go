@@ -3,18 +3,16 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/Fserlut/gophermart/internal/lib"
+	"github.com/Fserlut/gophermart/internal/logger"
 	user2 "github.com/Fserlut/gophermart/internal/models/user"
 	"github.com/Fserlut/gophermart/internal/services/user"
 )
 
 type UserHandler struct {
-	logger *slog.Logger
-
-	// TODO тут не лучше использовать интерфейс?
+	logger      logger.Logger
 	userService *user.ServiceUser
 }
 
@@ -90,7 +88,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func NewUserHandler(log *slog.Logger, userService *user.ServiceUser) *UserHandler {
+func NewUserHandler(log logger.Logger, userService *user.ServiceUser) *UserHandler {
 	h := &UserHandler{
 		logger:      log,
 		userService: userService,

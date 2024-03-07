@@ -13,7 +13,7 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-	log := logger.SetupLogger()
+	log := logger.NewLogger()
 
 	application, err := app.CreateApp(log, cfg)
 

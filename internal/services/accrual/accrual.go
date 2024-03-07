@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
+
 	"github.com/Fserlut/gophermart/internal/config"
 	"github.com/Fserlut/gophermart/internal/lib"
-	"log/slog"
-	"time"
+	"github.com/Fserlut/gophermart/internal/logger"
 )
 
 type Accrual struct {
-	logger         *slog.Logger
+	logger         logger.Logger
 	cfg            *config.Config
 	ctx            context.Context
 	cancelFunc     context.CancelFunc
@@ -83,7 +84,7 @@ func (a *Accrual) Process(orderNumber string) {
 	a.ordersChannel <- orderNumber
 }
 
-func NewAccrualService(ctx context.Context, log *slog.Logger, cfg *config.Config, orderProcessor OrderProcessor) *Accrual {
+func NewAccrualService(ctx context.Context, log logger.Logger, cfg *config.Config, orderProcessor OrderProcessor) *Accrual {
 	c, cancel := context.WithCancel(ctx)
 
 	return &Accrual{

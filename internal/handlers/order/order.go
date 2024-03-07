@@ -2,16 +2,18 @@ package order
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
+	"net/http"
+
 	"github.com/Fserlut/gophermart/internal/lib"
+	"github.com/Fserlut/gophermart/internal/logger"
 	user2 "github.com/Fserlut/gophermart/internal/models/user"
 	"github.com/Fserlut/gophermart/internal/services/order"
-	"io"
-	"log/slog"
-	"net/http"
 )
 
 type OrderHandler struct {
-	logger       *slog.Logger
+	logger       logger.Logger
 	orderService *order.ServiceOrder
 }
 
@@ -29,9 +31,22 @@ func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	code, _ := h.orderService.CreateOrder(r.Context(), orderNumber)
+	err = h.orderService.CreateOrder(r.Context(), orderNumber)
 
-	w.WriteHeader(code)
+	if err != nil {
+		if errors.Is(err, &lib.ErrOrderAlreadyCreated{}) {
+			w.WriteHeader(http.StatusOK)
+			return
+		} else if errors.Is(err, &lib.ErrOrderAlreadyCreatedByOtherUser{}) {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (h *OrderHandler) GetOrders(w http.ResponseWriter, r *http.Request) {
@@ -102,7 +117,7 @@ func (h *OrderHandler) Withdrawals(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
-func NewOrderHandler(log *slog.Logger, orderService *order.ServiceOrder) *OrderHandler {
+func NewOrderHandler(log logger.Logger, orderService *order.ServiceOrder) *OrderHandler {
 	return &OrderHandler{
 		logger:       log,
 		orderService: orderService,
